@@ -60,7 +60,7 @@ export const DashboardMiniMap: React.FC<DashboardMiniMapProps> = ({
     // Determine initial tile URL
     let tileUrl = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
     if (mapType === 'streets') {
-      tileUrl = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+      tileUrl = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
     } else if (mapType === 'traffic') {
       tileUrl = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
     } else if (mapType === 'dark') {
@@ -254,7 +254,7 @@ export const DashboardMiniMap: React.FC<DashboardMiniMapProps> = ({
 
     let tileUrl = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
     if (mapType === 'streets') {
-      tileUrl = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+      tileUrl = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
     } else if (mapType === 'traffic') {
       tileUrl = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
     } else if (mapType === 'dark') {
