@@ -1,6 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import React, { useState, useMemo } from 'react';
 import {
   Search,
   MapPin,
@@ -15,20 +13,17 @@ import {
   Train,
   Landmark,
   UtensilsCrossed,
-  Compass,
-  Crosshair,
   ExternalLink,
   ChevronRight,
   Sparkles,
   Info,
   CheckCircle2,
   AlertTriangle,
-  Layers,
-  Map as MapIcon,
-  List,
-  Eye,
   Share2,
   X,
+  Crosshair,
+  Compass,
+  Layers,
 } from 'lucide-react';
 import {
   PlaceItem,
@@ -70,16 +65,9 @@ export const ServicesDashboard: React.FC = () => {
   const [maxDistanceKm, setMaxDistanceKm] = useState<number>(35);
   const [searchFilter, setSearchFilter] = useState<string>('');
   const [selectedPlace, setSelectedPlace] = useState<EnrichedPlaceItem | null>(null);
-  const [viewMode, setViewMode] = useState<'split' | 'map' | 'list'>('split');
   const [isLocating, setIsLocating] = useState<boolean>(false);
   const [gpsError, setGpsError] = useState<string | null>(null);
   const [copiedPlaceId, setCopiedPlaceId] = useState<string | null>(null);
-
-  // Map references
-  const mapContainerRef = useRef<HTMLDivElement | null>(null);
-  const leafletMapRef = useRef<L.Map | null>(null);
-  const userMarkerRef = useRef<L.Marker | null>(null);
-  const placesLayerRef = useRef<L.LayerGroup | null>(null);
 
   // Calculate distance & sort by nearest first
   const enrichedPlaces = useMemo(() => {
@@ -182,10 +170,6 @@ export const ServicesDashboard: React.FC = () => {
     setLocationNameDisplay(label);
     setTypedLocation(label);
     setGpsError(null);
-
-    if (leafletMapRef.current) {
-      leafletMapRef.current.flyTo([lat, lng], 14.5, { duration: 1.2 });
-    }
   };
 
   // Browser Geolocation API ("Use My Location")
@@ -220,162 +204,9 @@ export const ServicesDashboard: React.FC = () => {
     setTimeout(() => setCopiedPlaceId(null), 2500);
   };
 
-  // Initialize Leaflet Map
-  useEffect(() => {
-    if (!mapContainerRef.current) return;
-
-    if (leafletMapRef.current) {
-      leafletMapRef.current.remove();
-      leafletMapRef.current = null;
-    }
-
-    const map = L.map(mapContainerRef.current, {
-      center: [userCoords.lat, userCoords.lng],
-      zoom: 14,
-      zoomControl: false,
-      attributionControl: false,
-    });
-
-    // High quality Voyager street tiles with crisp building & road footprints
-    L.tileLayer(
-      'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-      {
-        maxZoom: 19,
-        subdomains: 'abcd',
-      }
-    ).addTo(map);
-
-    // Layer groups for user pin and place markers
-    const placesLayer = L.layerGroup().addTo(map);
-    placesLayerRef.current = placesLayer;
-
-    leafletMapRef.current = map;
-
-    return () => {
-      if (leafletMapRef.current) {
-        leafletMapRef.current.remove();
-        leafletMapRef.current = null;
-      }
-    };
-  }, []);
-
-  // Update User Marker & Place Markers
-  useEffect(() => {
-    if (!leafletMapRef.current || !placesLayerRef.current) return;
-    const map = leafletMapRef.current;
-    const layer = placesLayerRef.current;
-
-    layer.clearLayers();
-
-    // 1. User Location Radar Marker
-    if (userMarkerRef.current) {
-      map.removeLayer(userMarkerRef.current);
-      userMarkerRef.current = null;
-    }
-
-    const userIcon = L.divIcon({
-      className: 'user-location-radar-marker',
-      html: `
-        <div style="position: relative; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;">
-          <div style="position: absolute; width: 36px; height: 36px; border-radius: 9999px; background: rgba(19, 102, 217, 0.25); animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
-          <div style="width: 20px; height: 20px; border-radius: 9999px; background: #1366d9; border: 3px solid #ffffff; box-shadow: 0 0 14px rgba(19, 102, 217, 0.8);"></div>
-        </div>
-      `,
-      iconSize: [36, 36],
-      iconAnchor: [18, 18],
-    });
-
-    const userMarker = L.marker([userCoords.lat, userCoords.lng], { icon: userIcon }).addTo(map);
-    userMarker.bindTooltip(
-      `<div style="font-family: system-ui; font-size: 11px; font-weight: bold; padding: 2px;">
-        📍 Your Location: ${locationNameDisplay}
-      </div>`,
-      { permanent: false, direction: 'top', offset: [0, -18] }
-    );
-    userMarkerRef.current = userMarker;
-
-    // 2. Render Filtered Places
-    filteredPlaces.forEach((place) => {
-      const isSelected = selectedPlace?.id === place.id;
-
-      // Color mapping by category
-      let markerBg = '#1366d9';
-      let symbol = '📍';
-      if (place.category === 'hospital') {
-        markerBg = '#ef4444';
-        symbol = '🏥';
-      } else if (place.category === 'police') {
-        markerBg = '#2563eb';
-        symbol = '👮';
-      } else if (place.category === 'fire') {
-        markerBg = '#ea580c';
-        symbol = '🚒';
-      } else if (place.category === 'bus_station') {
-        markerBg = '#8b5cf6';
-        symbol = '🚌';
-      } else if (place.category === 'railway_station') {
-        markerBg = '#0284c7';
-        symbol = '🚆';
-      } else if (place.category === 'tourist_place') {
-        markerBg = '#059669';
-        symbol = '🏛️';
-      } else if (place.category === 'restaurant') {
-        markerBg = '#d97706';
-        symbol = '🍽️';
-      }
-
-      const placeIcon = L.divIcon({
-        className: 'custom-place-service-marker',
-        html: `
-          <div style="
-            background: ${markerBg};
-            color: #ffffff;
-            width: ${isSelected ? '36px' : '30px'};
-            height: ${isSelected ? '36px' : '30px'};
-            border-radius: 9999px;
-            border: 2px solid #ffffff;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: ${isSelected ? '16px' : '13px'};
-            cursor: pointer;
-            transform: ${isSelected ? 'scale(1.2)' : 'scale(1)'};
-            transition: all 0.2s ease;
-          ">
-            ${symbol}
-          </div>
-        `,
-        iconSize: [isSelected ? 36 : 30, isSelected ? 36 : 30],
-        iconAnchor: [isSelected ? 18 : 15, isSelected ? 18 : 15],
-      });
-
-      const marker = L.marker([place.lat, place.lng], { icon: placeIcon });
-
-      marker.on('click', () => {
-        setSelectedPlace(place);
-        map.flyTo([place.lat, place.lng], 16, { duration: 0.8 });
-      });
-
-      marker.bindTooltip(
-        `<div style="font-family: system-ui; font-size: 11px; padding: 2px 4px;">
-          <strong style="color: ${markerBg}; font-size: 12px;">${place.name}</strong><br/>
-          <span>${place.distanceKm} km away • ${place.driveMin} mins drive</span><br/>
-          <span style="color: #64748b;">${place.phone}</span>
-        </div>`,
-        { direction: 'top', offset: [0, -16] }
-      );
-
-      layer.addLayer(marker);
-    });
-  }, [filteredPlaces, userCoords, locationNameDisplay, selectedPlace]);
-
-  // Focus a place from list
+  // Select place from list
   const handleSelectPlace = (place: EnrichedPlaceItem) => {
-    setSelectedPlace(place);
-    if (leafletMapRef.current) {
-      leafletMapRef.current.flyTo([place.lat, place.lng], 16.5, { duration: 1.0 });
-    }
+    setSelectedPlace((prev) => (prev?.id === place.id ? null : place));
   };
 
   // Helper category badge info
@@ -722,266 +553,154 @@ export const ServicesDashboard: React.FC = () => {
           })}
         </div>
 
-        {/* View Layout Toggle: Split / Map / List */}
-        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-semibold shrink-0">
-          <button
-            onClick={() => setViewMode('split')}
-            className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1 ${
-              viewMode === 'split' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <Layers className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Split</span>
-          </button>
-          <button
-            onClick={() => setViewMode('list')}
-            className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1 ${
-              viewMode === 'list' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <List className="w-3.5 h-3.5" />
-            <span>List</span>
-          </button>
-          <button
-            onClick={() => setViewMode('map')}
-            className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1 ${
-              viewMode === 'map' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <MapIcon className="w-3.5 h-3.5" />
-            <span>Map</span>
-          </button>
+        {/* Result Count Badge */}
+        <div className="flex items-center gap-2 text-xs text-slate-500 shrink-0">
+          <span className="bg-slate-100 text-slate-700 px-3 py-1.5 rounded-xl font-bold">
+            {filteredPlaces.length} Services Found
+          </span>
+          <span className="text-[11px] bg-blue-50 text-[#1366d9] px-2.5 py-1.5 rounded-xl font-semibold">
+            Within {maxDistanceKm} km of {locationNameDisplay}
+          </span>
         </div>
       </div>
 
-      {/* 5. Main Content Area (Interactive Map & Cards Grid) */}
-      <div
-        className={`grid gap-4 ${
-          viewMode === 'split'
-            ? 'grid-cols-1 lg:grid-cols-12'
-            : viewMode === 'list'
-            ? 'grid-cols-1'
-            : 'grid-cols-1'
-        }`}
-      >
-        {/* Left Column: Place Cards List */}
-        {viewMode !== 'map' && (
-          <div
-            className={`${
-              viewMode === 'split' ? 'lg:col-span-6 xl:col-span-7' : 'w-full'
-            } space-y-3 max-h-[720px] overflow-y-auto pr-1`}
-          >
-            <div className="flex items-center justify-between text-xs text-slate-500 pb-1">
-              <span>
-                Found <b>{filteredPlaces.length}</b> places sorted by distance from <b>{locationNameDisplay}</b>
-              </span>
-              <span className="text-[11px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium">
-                Within {maxDistanceKm} km
-              </span>
-            </div>
+      {/* 5. Main Content Area (Full Width Responsive Services Grid) */}
+      <div className="w-full">
+        {filteredPlaces.length === 0 ? (
+          <div className="bg-white rounded-2xl p-12 text-center border border-slate-200 text-slate-500 space-y-3 shadow-xs">
+            <MapPin className="w-10 h-10 text-slate-300 mx-auto" />
+            <h4 className="font-bold text-slate-800 text-base">No services found within {maxDistanceKm} km</h4>
+            <p className="text-xs text-slate-500 max-w-md mx-auto">
+              Try increasing the search distance radius or selecting a different category from the filters above.
+            </p>
+            <button
+              onClick={() => {
+                setMaxDistanceKm(60);
+                setActiveCategory('all');
+                setSearchFilter('');
+              }}
+              className="px-4 py-2 rounded-xl bg-[#1366d9] text-white font-bold text-xs hover:bg-blue-700 transition-colors shadow-sm cursor-pointer"
+            >
+              Expand Search Radius to 60 km
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {filteredPlaces.map((place) => {
+              const meta = getCategoryMeta(place.category);
+              const isSelected = selectedPlace?.id === place.id;
 
-            {filteredPlaces.length === 0 ? (
-              <div className="bg-white rounded-2xl p-8 text-center border border-slate-200 text-slate-500 space-y-2">
-                <MapPin className="w-8 h-8 text-slate-400 mx-auto" />
-                <h4 className="font-bold text-slate-800 text-sm">No services found within {maxDistanceKm} km</h4>
-                <p className="text-xs">Try increasing the search radius or selecting a different category above.</p>
-                <button
-                  onClick={() => {
-                    setMaxDistanceKm(60);
-                    setActiveCategory('all');
-                    setSearchFilter('');
-                  }}
-                  className="px-3.5 py-1.5 rounded-xl bg-blue-50 text-[#1366d9] font-bold text-xs hover:bg-blue-100 transition-colors cursor-pointer"
+              return (
+                <div
+                  key={place.id}
+                  onClick={() => handleSelectPlace(place)}
+                  className={`bg-white rounded-2xl p-4 border transition-all cursor-pointer flex flex-col justify-between gap-3 group ${
+                    isSelected
+                      ? 'border-[#1366d9] ring-2 ring-blue-500/20 shadow-md bg-blue-50/15'
+                      : 'border-slate-200 hover:border-slate-300 shadow-xs hover:shadow-md'
+                  }`}
                 >
-                  Expand Search to 60 km
-                </button>
-              </div>
-            ) : (
-              filteredPlaces.map((place) => {
-                const meta = getCategoryMeta(place.category);
-                const Icon = meta.icon;
-                const isSelected = selectedPlace?.id === place.id;
-
-                return (
-                  <div
-                    key={place.id}
-                    onClick={() => handleSelectPlace(place)}
-                    className={`bg-white rounded-2xl p-4 border transition-all cursor-pointer flex flex-col sm:flex-row gap-4 ${
-                      isSelected
-                        ? 'border-[#1366d9] ring-2 ring-blue-500/20 shadow-md bg-blue-50/20'
-                        : 'border-slate-200 hover:border-slate-300 shadow-xs hover:shadow-sm'
-                    }`}
-                  >
-                    {/* Place Photo Preview */}
-                    <div className="relative w-full sm:w-36 h-28 sm:h-auto rounded-xl overflow-hidden shrink-0 bg-slate-100 border border-slate-100">
+                  <div className="space-y-3">
+                    {/* Top Row: Place Image + Category Badge */}
+                    <div className="relative w-full h-40 rounded-xl overflow-hidden bg-slate-100 border border-slate-100">
                       <img
                         src={place.imageUrl}
                         alt={place.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
-                      <div className="absolute top-2 left-2">
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase border shadow-xs ${meta.color}`}>
+                      <div className="absolute top-2.5 left-2.5">
+                        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase border shadow-xs ${meta.color}`}>
                           {meta.label}
                         </span>
                       </div>
+                      <div className="absolute top-2.5 right-2.5">
+                        <span className="text-xs font-bold text-[#1366d9] bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-full shadow-xs">
+                          {place.distanceKm} km
+                        </span>
+                      </div>
                       {place.is24x7 && (
-                        <div className="absolute bottom-2 left-2">
-                          <span className="text-[9px] bg-emerald-600 text-white font-bold px-1.5 py-0.5 rounded shadow-xs">
+                        <div className="absolute bottom-2.5 left-2.5">
+                          <span className="text-[10px] bg-emerald-600 text-white font-bold px-2 py-0.5 rounded shadow-xs">
                             24/7 OPEN
                           </span>
                         </div>
                       )}
                     </div>
 
-                    {/* Place Info */}
-                    <div className="flex-1 min-w-0 flex flex-col justify-between space-y-2">
-                      <div>
-                        <div className="flex items-start justify-between gap-2">
-                          <h4 className="font-bold text-slate-900 text-sm leading-snug">{place.name}</h4>
-                          <span className="text-xs font-bold text-[#1366d9] bg-blue-50 px-2 py-0.5 rounded-lg shrink-0">
-                            {place.distanceKm} km
-                          </span>
-                        </div>
-
-                        <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{place.address}</p>
-
-                        {place.cuisineOrSpecialty && (
-                          <p className="text-[11px] text-slate-700 font-medium mt-1 line-clamp-1">
-                            <span className="text-slate-400">Specialty:</span> {place.cuisineOrSpecialty}
-                          </p>
-                        )}
-                      </div>
-
-                      {/* Travel Estimates & Badges */}
-                      <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-600">
-                        <span className="flex items-center gap-1 font-medium bg-slate-100 px-2 py-0.5 rounded-md">
-                          <Navigation className="w-3 h-3 text-[#1366d9]" />
-                          <span>~{place.driveMin} min drive</span>
-                        </span>
-                        <span className="flex items-center gap-1 bg-slate-100 px-2 py-0.5 rounded-md">
-                          <Clock className="w-3 h-3 text-slate-500" />
-                          <span>{place.timings}</span>
-                        </span>
-                        {place.rating && (
-                          <span className="text-amber-600 font-bold bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
-                            ★ {place.rating} ({place.reviewsCount ?? 0})
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Action Buttons */}
-                      <div className="flex flex-wrap items-center justify-between pt-2 border-t border-slate-100 gap-2">
-                        <a
-                          href={`tel:${place.phone}`}
-                          onClick={(e) => e.stopPropagation()}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-colors"
-                        >
-                          <Phone className="w-3 h-3" />
-                          <span>Call: {place.phone}</span>
-                        </a>
-
-                        <div className="flex items-center gap-1.5">
-                          <a
-                            href={`https://www.google.com/maps/dir/?api=1&destination=${place.lat},${place.lng}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs transition-colors"
-                            title="Open in Google Maps"
-                          >
-                            <ExternalLink className="w-3 h-3 text-[#1366d9]" />
-                            <span>Directions</span>
-                          </a>
-
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleSharePlace(place);
-                            }}
-                            className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 transition-colors"
-                            title="Copy details to clipboard"
-                          >
-                            {copiedPlaceId === place.id ? (
-                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                            ) : (
-                              <Share2 className="w-3.5 h-3.5" />
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        )}
-
-        {/* Right Column: Interactive Map View */}
-        {viewMode !== 'list' && (
-          <div
-            className={`${
-              viewMode === 'split' ? 'lg:col-span-6 xl:col-span-5' : 'w-full'
-            } h-[600px] lg:h-[720px] rounded-2xl overflow-hidden border border-slate-200 relative shadow-sm bg-white flex flex-col`}
-          >
-            {/* Top Map Floating Badge */}
-            <div className="absolute top-3 left-3 z-30 pointer-events-none">
-              <div className="bg-white/95 backdrop-blur-md border border-slate-200 px-3 py-1.5 rounded-xl shadow-md text-xs font-semibold text-slate-900 flex items-center gap-2">
-                <Compass className="w-3.5 h-3.5 text-[#1366d9] animate-spin-slow" />
-                <span>Nearby Services Map • {filteredPlaces.length} Markers</span>
-              </div>
-            </div>
-
-            {/* Selected Place Overlay Card on Map */}
-            {selectedPlace && (
-              <div className="absolute bottom-3 left-3 right-3 z-30 bg-white/95 backdrop-blur-md border border-slate-200 rounded-2xl p-3.5 shadow-xl animate-in fade-in slide-in-from-bottom-2 text-xs">
-                <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-2 mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="p-1.5 rounded-lg bg-blue-100 text-[#1366d9]">
-                      <MapPin className="w-4 h-4" />
-                    </span>
+                    {/* Place Header & Address */}
                     <div>
-                      <h4 className="font-bold text-slate-900 text-xs">{selectedPlace.name}</h4>
-                      <span className="text-[10px] text-slate-500">{selectedPlace.address}</span>
+                      <h4 className="font-bold text-slate-900 text-sm leading-snug group-hover:text-[#1366d9] transition-colors">
+                        {place.name}
+                      </h4>
+                      <p className="text-xs text-slate-500 mt-1 line-clamp-1">{place.address}</p>
+
+                      {place.cuisineOrSpecialty && (
+                        <p className="text-xs text-slate-700 font-medium mt-1">
+                          <span className="text-slate-400 font-normal">Details:</span> {place.cuisineOrSpecialty}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Travel Estimates & Badges */}
+                    <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-600">
+                      <span className="flex items-center gap-1 font-semibold bg-slate-100 px-2 py-0.5 rounded-md text-slate-800">
+                        <Navigation className="w-3 h-3 text-[#1366d9]" />
+                        <span>~{place.driveMin} min drive</span>
+                      </span>
+                      <span className="flex items-center gap-1 bg-slate-100 px-2 py-0.5 rounded-md">
+                        <Clock className="w-3 h-3 text-slate-500" />
+                        <span>{place.timings}</span>
+                      </span>
+                      {place.rating && (
+                        <span className="text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                          ★ {place.rating} ({place.reviewsCount ?? 0})
+                        </span>
+                      )}
                     </div>
                   </div>
-                  <button
-                    onClick={() => setSelectedPlace(null)}
-                    className="text-slate-400 hover:text-slate-700 p-1"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                </div>
 
-                <div className="flex items-center justify-between text-[11px] mb-2.5">
-                  <span className="font-bold text-[#1366d9]">
-                    {selectedPlace.distanceKm} km away (~{selectedPlace.driveMin} min drive)
-                  </span>
-                  <span className="text-slate-500">{selectedPlace.timings}</span>
-                </div>
+                  {/* Bottom Action Buttons */}
+                  <div className="flex items-center justify-between pt-3 border-t border-slate-100 gap-2">
+                    <a
+                      href={`tel:${place.phone}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-colors"
+                    >
+                      <Phone className="w-3.5 h-3.5" />
+                      <span>Call: {place.phone}</span>
+                    </a>
 
-                <div className="flex items-center justify-between gap-2">
-                  <a
-                    href={`tel:${selectedPlace.phone}`}
-                    className="flex-1 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-center text-xs flex items-center justify-center gap-1.5 shadow-xs"
-                  >
-                    <Phone className="w-3 h-3" /> Call: {selectedPlace.phone}
-                  </a>
-                  <a
-                    href={`https://www.google.com/maps/dir/?api=1&destination=${selectedPlace.lat},${selectedPlace.lng}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 py-1.5 rounded-xl bg-[#1366d9] hover:bg-blue-700 text-white font-bold text-center text-xs flex items-center justify-center gap-1.5 shadow-xs"
-                  >
-                    <Navigation className="w-3 h-3" /> Navigate
-                  </a>
-                </div>
-              </div>
-            )}
+                    <a
+                      href={`https://www.google.com/maps/dir/?api=1&destination=${place.lat},${place.lng}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="inline-flex items-center gap-1 py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs transition-colors"
+                      title="Open directions in Google Maps"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5 text-[#1366d9]" />
+                      <span>Directions</span>
+                    </a>
 
-            {/* Leaflet Map Surface */}
-            <div ref={mapContainerRef} className="w-full h-full flex-1" />
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSharePlace(place);
+                      }}
+                      className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
+                      title="Copy details"
+                    >
+                      {copiedPlaceId === place.id ? (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      ) : (
+                        <Share2 className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
