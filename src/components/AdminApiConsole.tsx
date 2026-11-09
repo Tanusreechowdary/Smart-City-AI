@@ -32,7 +32,7 @@ export const AdminApiConsole: React.FC = () => {
     {
       method: 'GET',
       path: '/api/dashboard/overview',
-      description: 'Fetch aggregate Vijayawada smart city KPIs across Benz Circle traffic, Prakasam Barrage, AQI, and VMC waste.',
+      description: 'Fetch aggregate Vijayawada smart city KPIs across Benz Circle traffic, Prakasam Barrage water SCADA, AQI, and Gunadala grid.',
       response: metrics,
     },
     {
@@ -142,7 +142,7 @@ export const AdminApiConsole: React.FC = () => {
       `Vijayawada,Solar Power Supply,${metrics.energy.solar_generation_mw},MW,Optimal`,
       `Vijayawada,Prakasam Barrage Reservoir,${metrics.water.main_reservoir_pct},%,Nominal 12ft`,
       `Vijayawada,Pipeline Pressure,${metrics.water.trunk_pressure_bar},Bar,Scattered`,
-      `Vijayawada,Average Compactor Fill,${metrics.waste.average_fill_pct},%,VMC TSP Active`,
+      `Vijayawada,Streetlights Online,${metrics.energy.streetlights_online},Count,99.4% Operational`,
     ].join('\n');
 
     const blob = new Blob([headers + rows], { type: 'text/csv' });

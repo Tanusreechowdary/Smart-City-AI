@@ -151,7 +151,7 @@ export interface WaterPipelineNode {
 
 export interface Complaint {
   ticket_id: string;
-  category: 'Pothole' | 'Overflowing Bin' | 'Water Leak' | 'Streetlight' | 'Noise Violation' | 'Traffic Hazard';
+  category: 'Pothole' | 'Drainage' | 'Waste Disposal' | 'Water Leak' | 'Streetlight' | 'Noise Violation' | 'Traffic Hazard';
   location: string;
   zone: string;
   description: string;

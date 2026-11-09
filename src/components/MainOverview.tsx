@@ -17,12 +17,19 @@ import {
   Search,
   Headphones,
   Home,
+  Zap,
   MoreHorizontal,
   CheckCircle2,
   AlertTriangle,
   X,
   ExternalLink,
   Globe,
+  Camera,
+  Image as ImageIcon,
+  Upload,
+  HeartPulse,
+  PhoneCall,
+  ChevronRight,
 } from 'lucide-react';
 import { useCityData } from '../context/CityDataContext';
 import { DashboardMiniMap } from './DashboardMiniMap';
@@ -48,9 +55,10 @@ export const MainOverview: React.FC<MainOverviewProps> = ({ onNavigateTab }) => 
   // Form states
   const [complaintText, setComplaintText] = useState('');
   const [complaintCategory, setComplaintCategory] = useState<
-    'Streetlight' | 'Overflowing Bin' | 'Traffic Hazard' | 'Water Leak'
+    'Streetlight' | 'Drainage' | 'Waste Disposal' | 'Traffic Hazard' | 'Water Leak'
   >('Streetlight');
   const [complaintLocation, setComplaintLocation] = useState('Benz Circle, Sector 5');
+  const [complaintImage, setComplaintImage] = useState<string | null>(null);
 
   const handleRegisterComplaint = (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,12 +70,14 @@ export const MainOverview: React.FC<MainOverviewProps> = ({ onNavigateTab }) => 
       description: complaintText,
       urgency: 'MEDIUM',
       reporterName: 'Tanusree Chowdary',
+      imageUrl: complaintImage || undefined,
     });
-    setModalSuccessMsg('Complaint registered successfully! Ticket ID generated.');
+    setModalSuccessMsg('Complaint registered successfully! Ticket ID generated with photo attachment.');
     setTimeout(() => {
       setActiveModal(null);
       setModalSuccessMsg(null);
       setComplaintText('');
+      setComplaintImage(null);
     }, 1500);
   };
 
@@ -80,6 +90,39 @@ export const MainOverview: React.FC<MainOverviewProps> = ({ onNavigateTab }) => 
           alt="Welcome to Smart City Dashboard - Connected People, Sustainable Environment, Better Tomorrow"
           className="w-full h-auto object-cover max-h-[195px] select-none block"
         />
+      </div>
+
+      {/* Emergency Assistance Quick Ticker & Finder */}
+      <div className="bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 rounded-2xl p-3 sm:p-3.5 text-white flex flex-wrap items-center justify-between gap-2 shadow-sm">
+        <div className="flex items-center gap-2.5">
+          <span className="p-1.5 rounded-xl bg-white/20 backdrop-blur-md">
+            <HeartPulse className="w-4 h-4 text-white animate-pulse" />
+          </span>
+          <div>
+            <span className="text-xs font-bold tracking-wide">
+              Emergency Assistance & Nearby Services:
+            </span>
+            <span className="text-xs text-white/90 ml-1.5 hidden sm:inline">
+              Find 24/7 Hospitals, Police Stations, Fire Offices, Bus & Railway Stations, and Tourist Spots near you.
+            </span>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <a
+            href="tel:108"
+            className="text-[11px] font-bold bg-white/20 hover:bg-white/30 text-white px-2.5 py-1 rounded-lg border border-white/30 transition-all flex items-center gap-1"
+          >
+            <PhoneCall className="w-3 h-3" />
+            <span>108 Medical</span>
+          </a>
+          <button
+            onClick={() => onNavigateTab('services')}
+            className="text-xs font-bold bg-white text-rose-700 hover:bg-rose-50 px-3 py-1 rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-1"
+          >
+            <span>Open Services</span>
+            <ChevronRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
 
       {/* 2. Top Five Summary/KPI Cards */}
@@ -146,18 +189,18 @@ export const MainOverview: React.FC<MainOverviewProps> = ({ onNavigateTab }) => 
           </div>
         </div>
 
-        {/* Card 5: Waste Collection */}
+        {/* Card 5: Smart Power Grid */}
         <div
-          onClick={() => onNavigateTab('waste')}
+          onClick={() => onNavigateTab('energy')}
           className="bg-white rounded-2xl p-4 border border-slate-100 shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:shadow-md transition-all flex items-center gap-3.5 cursor-pointer group"
         >
           <div className="w-12 h-12 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-xs group-hover:scale-105 transition-transform">
-            <Recycle className="w-6 h-6" />
+            <Zap className="w-6 h-6" />
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-semibold text-slate-700">Waste Collection</p>
-            <p className="text-sm font-bold text-emerald-600 mt-0.5">Completed</p>
-            <p className="text-xs font-normal text-slate-400">Today</p>
+            <p className="text-xs font-semibold text-slate-700">Power Grid</p>
+            <p className="text-sm font-bold text-emerald-600 mt-0.5">Optimal</p>
+            <p className="text-xs font-medium text-slate-500">418 MW • 32% Green</p>
           </div>
         </div>
       </div>
@@ -260,13 +303,13 @@ export const MainOverview: React.FC<MainOverviewProps> = ({ onNavigateTab }) => 
                   className="absolute top-[52%] left-[18%] w-[25%] h-[15%] cursor-pointer hover:ring-2 hover:ring-rose-400 rounded-full transition-all opacity-0 hover:opacity-20 bg-rose-500"
                 />
 
-                {/* Waste Bin Pin */}
+                {/* Grid Substation Pin */}
                 <button
                   onClick={() => {
-                    setActivePin('waste1');
+                    setActivePin('substation');
                     setActivePinDetailText(null);
                   }}
-                  title="Smart Bin: Governorpet Market"
+                  title="Gunadala APTRANSCO Substation"
                   className="absolute bottom-[14%] left-[28%] w-[22%] h-[15%] cursor-pointer hover:ring-2 hover:ring-amber-400 rounded-full transition-all opacity-0 hover:opacity-20 bg-amber-500"
                 />
 
@@ -324,9 +367,9 @@ export const MainOverview: React.FC<MainOverviewProps> = ({ onNavigateTab }) => 
                           🚨 <span className="font-bold text-slate-900">Traffic Congestion Alert</span>: Prakasam Barrage roadwork. Flow speed 22 km/h.
                         </p>
                       )}
-                      {activePin === 'waste1' && (
+                      {activePin === 'substation' && (
                         <p>
-                          🗑️ <span className="font-bold text-slate-900">Smart Waste Bin #04</span>: Governorpet Commercial Area. Fill level: 48%. Next collection 14:00.
+                          ⚡ <span className="font-bold text-slate-900">APTRANSCO Substation</span>: Gunadala 220kV Grid. Active load 418 MW • Solar feed: 114 MW (Nominal).
                         </p>
                       )}
                       {activePin === 'facility' && (
@@ -550,9 +593,9 @@ export const MainOverview: React.FC<MainOverviewProps> = ({ onNavigateTab }) => 
               </div>
             </div>
 
-            {/* Waste Collected Circular Progress Ring */}
+            {/* Clean Energy & Solar Grid Circular Progress Ring */}
             <div className="pt-3 border-t border-slate-100">
-              <p className="text-xs font-semibold text-slate-700 mb-2">Waste Collected</p>
+              <p className="text-xs font-semibold text-slate-700 mb-2">Renewable Energy Mix</p>
               <div className="flex items-center gap-5">
                 {/* SVG Donut Ring */}
                 <div className="relative w-20 h-20 shrink-0 flex items-center justify-center">
@@ -582,7 +625,7 @@ export const MainOverview: React.FC<MainOverviewProps> = ({ onNavigateTab }) => 
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex items-center gap-1.5 text-slate-600">
                       <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                      <span>Collected</span>
+                      <span>Solar & Hydro</span>
                     </div>
                     <span className="font-bold text-slate-800">78%</span>
                   </div>
@@ -590,12 +633,12 @@ export const MainOverview: React.FC<MainOverviewProps> = ({ onNavigateTab }) => 
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex items-center gap-1.5 text-slate-600">
                       <span className="w-2 h-2 rounded-full bg-slate-300" />
-                      <span>Remaining</span>
+                      <span>Thermal Grid</span>
                     </div>
                     <span className="font-bold text-slate-800">22%</span>
                   </div>
 
-                  <p className="text-[11px] text-slate-400 font-normal pt-1">Total Waste: 120 tons</p>
+                  <p className="text-[11px] text-slate-400 font-normal pt-1">Total Solar: 114 MW</p>
                 </div>
               </div>
             </div>
@@ -649,11 +692,11 @@ export const MainOverview: React.FC<MainOverviewProps> = ({ onNavigateTab }) => 
               <div className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg bg-emerald-500 text-white flex items-center justify-center shrink-0">
-                    <Recycle className="w-4 h-4" />
+                    <Zap className="w-4 h-4" />
                   </div>
                   <div>
-                    <p className="font-semibold text-slate-800 leading-tight">Waste collection completed</p>
-                    <p className="text-[11px] text-slate-400">Zone B - 26 Oct 2026</p>
+                    <p className="font-semibold text-slate-800 leading-tight">Solar generation peak</p>
+                    <p className="text-[11px] text-slate-400">Canal Grid - 114.2 MW clean energy</p>
                   </div>
                 </div>
                 <span className="text-[11px] text-slate-400 whitespace-nowrap">08:30 AM</span>
@@ -774,7 +817,8 @@ export const MainOverview: React.FC<MainOverviewProps> = ({ onNavigateTab }) => 
                       className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs outline-none bg-white"
                     >
                       <option value="Streetlight">Street Light / Power Failure</option>
-                      <option value="Overflowing Bin">Garbage Overflow / Waste Pickup</option>
+                      <option value="Waste Disposal">Waste Disposal / Garbage Collection</option>
+                      <option value="Drainage">Drainage & Stormwater Blockage</option>
                       <option value="Traffic Hazard">Traffic Light Signal / Roadwork</option>
                       <option value="Water Leak">Water Supply / Pipeline Leakage</option>
                     </select>
@@ -800,6 +844,91 @@ export const MainOverview: React.FC<MainOverviewProps> = ({ onNavigateTab }) => 
                       onChange={(e) => setComplaintText(e.target.value)}
                       className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs outline-none"
                     />
+                  </div>
+
+                  {/* Photo Evidence in Modal */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        <Camera className="w-3.5 h-3.5 text-[#1366d9]" /> Attach Photo Evidence
+                      </span>
+                      {complaintImage && (
+                        <button
+                          type="button"
+                          onClick={() => setComplaintImage(null)}
+                          className="text-[10px] text-rose-500 hover:underline"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </label>
+
+                    {!complaintImage ? (
+                      <div className="space-y-1.5">
+                        <label className="flex items-center justify-center gap-2 p-2.5 rounded-xl border-2 border-dashed border-slate-200 hover:border-blue-400 bg-slate-50 cursor-pointer text-slate-600 transition-colors">
+                          <Upload className="w-4 h-4 text-slate-400" />
+                          <span className="text-xs">Upload photo from device</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const f = e.target.files?.[0];
+                              if (f) {
+                                const reader = new FileReader();
+                                reader.onloadend = () => setComplaintImage(reader.result as string);
+                                reader.readAsDataURL(f);
+                              }
+                            }}
+                          />
+                        </label>
+                        <div className="flex gap-1 text-[10px] text-slate-500">
+                          <span>Quick sample:</span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setComplaintImage(
+                                'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=800&q=80'
+                              )
+                            }
+                            className="text-blue-600 hover:underline"
+                          >
+                            Road Pothole
+                          </button>
+                          <span>•</span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setComplaintImage(
+                                'https://images.unsplash.com/photo-1541888946425-d0fbb18086f6?auto=format&fit=crop&w=800&q=80'
+                              )
+                            }
+                            className="text-blue-600 hover:underline"
+                          >
+                            Drainage Block
+                          </button>
+                          <span>•</span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setComplaintImage(
+                                'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=800&q=80'
+                              )
+                            }
+                            className="text-blue-600 hover:underline"
+                          >
+                            Waste Disposal
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="relative rounded-xl overflow-hidden border border-slate-200 h-24 bg-slate-900">
+                        <img src={complaintImage} alt="Uploaded evidence" className="w-full h-full object-cover" />
+                        <div className="absolute bottom-1 right-1 bg-black/60 text-white text-[9px] px-1.5 py-0.5 rounded font-medium">
+                          Photo Attached ✓
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex justify-end gap-2 pt-2">

@@ -6,7 +6,6 @@ import {
   LayoutGrid,
   Bus,
   Leaf,
-  Trash2,
   Newspaper,
   Settings,
 } from 'lucide-react';
@@ -21,10 +20,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentTab, setTab }) => {
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'city-map', label: 'City Map', icon: Map },
     { id: 'citizen', label: 'My Complaints', icon: FileText },
-    { id: 'services', label: 'Services', icon: LayoutGrid },
+    { id: 'services', label: 'Emergency & Services', icon: LayoutGrid },
     { id: 'traffic', label: 'Traffic & Transport', icon: Bus },
     { id: 'environment', label: 'Environment', icon: Leaf },
-    { id: 'waste', label: 'Waste Management', icon: Trash2 },
     { id: 'news', label: 'News & Updates', icon: Newspaper },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];

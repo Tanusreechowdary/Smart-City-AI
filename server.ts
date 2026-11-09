@@ -27,33 +27,29 @@ async function startServer() {
 
     if (apiKey && apiKey !== 'MY_GEMINI_API_KEY') {
       try {
-        const ai = new GoogleGenAI({ apiKey });
-        const systemInstruction = `You are the Smart City AI Autonomous Urban Command Copilot for the State of Andhra Pradesh, India, including Vijayawada Municipal Corporation (VMC), Greater Visakhapatnam Municipal Corporation (GVMC), Tirupati Municipal Corporation (TMC), Guntur Municipal Corporation (GMC), and the APCRDA Digital Twin GIS Command Center.
+        const ai = new GoogleGenAI({
+          apiKey,
+          httpOptions: {
+            headers: {
+              'User-Agent': 'aistudio-build',
+            },
+          },
+        });
+        const systemInstruction = `You are Civy (సివి), the cute, friendly, and highly intelligent Smart City AI Assistant for Andhra Pradesh, India (motto: "Smarter • Safer • Greener").
 
-Statewide Andhra Pradesh Telemetry & GIS Context:
-- Geographical Scope: Entire Andhra Pradesh (26 Districts: Vijayawada, Amaravati, Visakhapatnam, Tirupati, Guntur, Kurnool, Kakinada, Rajamahendravaram, Nellore, Kadapa, Anantapur).
-- Interactive Map GIS Layers: High-Res Satellite (House Roofs at 19x zoom), Live Traffic Flow & Congestion Corridors, Satellite Hybrid, OpenStreetMap Streets & Building Footprints, CartoDB Voyager, Command Center Dark GIS, and Environmental AQI.
-- Live Highway & Corridor Traffic:
-  • Benz Circle Flyover & MG Road: 19 km/h (Congested, +14m delay). Detour: Inner Ring Road.
-  • Prakasam Barrage Krishna Bridge: 28 km/h (Moderate, single-lane sluice work). Detour: Kanaka Durga Flyover.
-  • NH-16 Vijayawada-Guntur Express: 74 km/h (Free flow).
-  • Vizag Beach Road Marine Drive: 35 km/h (Moderate weekend/tourist flow).
-  • Tirupati Alipiri Gateway & Bypass: 22 km/h (+12m delay, pilgrim queue).
-- Current Urban Metrics:
-  • Traffic Congestion Index: ${context?.metrics?.traffic?.congestion_index ?? 74}%
-  • Air Quality: ${context?.metrics?.environment?.aqi ?? 58} AQI (Good/Moderate)
-  • Power Grid Demand: ${context?.metrics?.energy?.grid_load_mw ?? 418} MW (Gunadala Substation, Solar: ${context?.metrics?.energy?.solar_generation_mw ?? 114} MW)
-  • Water SCADA: Prakasam Barrage reservoir at 12.0 ft, main trunk pressure 4.22 Bar.
-  • Waste Collection: ${context?.metrics?.waste?.average_fill_pct ?? 68}% compactor efficiency.
+You are designed to answer ALL questions asked by citizens, operators, and tourists warmly, thoroughly, and accurately:
+1. Smart City Operations: Live city telemetry, energy grid loads, solar generation, water SCADA reservoir levels (Prakasam Barrage), air quality (AQI), and citizen grievances (waste disposal, garbage collection, drainage, road potholes, streetlight repairs).
+2. Emergency Assistance: Directing users to nearby 24/7 hospitals (GGH Gunadala, Manipal, Ramesh, KGH, SVIMS), emergency speed dials (108 Ambulance, 100/112 Police, 101 Fire, 1091 Disha Women SOS), police stations, and fire offices.
+3. Transit & City Services: Pandit Nehru Bus Station (PNBS), Vijayawada Junction Railway Station (BZA), airports, heritage tourist landmarks (Kanaka Durga Temple, Undavalli Caves, Bhavani Island), and restaurants.
+4. Universal Q&A: You can answer ANY general questions, explain concepts, provide facts, or assist with any topic with warmth, intelligence, and clarity.
 
-Respond in a professional, courteous, authoritative municipal style. Provide actionable intelligence, specific routes, landmark references, and advice for citizens and city operators.`;
+Always maintain a friendly, helpful persona as Civy. Use clear markdown formatting (bullet points, bold text) where helpful.`;
 
         const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
+          model: 'gemini-3.8-flash',
           contents: message,
           config: {
             systemInstruction,
-            temperature: 0.3,
           },
         });
 
@@ -67,7 +63,7 @@ Respond in a professional, courteous, authoritative municipal style. Provide act
 
     // Expert rule-based fallback if API key quota exceeded or offline
     const query = message.toLowerCase();
-    let reply = `Namaskaram! Vijayawada Smart City AI Copilot is online. Monitoring 1,280+ IoT sensors across Benz Circle, Prakasam Barrage, Auto Nagar, and One Town. How can I assist with municipal operations?`;
+    let reply = `Namaskaram! I am **Civy** (సివి), your friendly Smart City AI Assistant! 🤖🏙️✨ I'm here to help make our city Smarter, Safer, and Greener. How can I assist you today?`;
 
     if (query.includes('traffic') || query.includes('congestion') || query.includes('benz')) {
       reply = `🚦 **Benz Circle & MG Road Telemetry**:
@@ -82,9 +78,13 @@ Respond in a professional, courteous, authoritative municipal style. Provide act
       reply = `⚡ **APTRANSCO Gunadala Substation**:
 • Grid Demand: **418.5 MW** (Solar contribution: **114.2 MW**).
 • Smart Streetlights along Bandar Road operating on automated 75% dusk dimming curve.`;
-    } else if (query.includes('waste') || query.includes('trash') || query.includes('bin')) {
-      reply = `♻️ **VMC Solid Waste Fleet Logistics**:
-• One Town Kaleswara Rao Market (96% full) & PNBS Terminal 1 (92% full) scheduled for priority compactor collection via TSP algorithm.`;
+    } else if (query.includes('hospital') || query.includes('emergency') || query.includes('police') || query.includes('fire') || query.includes('services') || query.includes('doctor')) {
+      reply = `🏥 **Emergency Assistance & Nearby Civic Services**:
+• **Medical & Trauma**: Government General Hospital (GGH Gunadala, 0866-2576666, 108 Ambulance), Manipal Hospital (Tadepalli, 0866-6450505), Ramesh Hospitals (Ring Road).
+• **Police & Security**: Central Police Commissionerate (Bandar Road, 0866-2579999 / 100 / 112), Disha Women Police (1091 SOS).
+• **Fire & Disaster**: State Disaster Response & Fire Services HQ (Auto Nagar, 101 / 0866-2544101), Suryaraopet Central Fire Station (0866-2572101).
+• **Transit Hubs**: Pandit Nehru Bus Station (PNBS, 24x7 RTC terminal), Vijayawada Junction Railway Station (BZA, 139).
+• Visit the **Emergency & Services** tab to search by your exact location and calculate instant distances.`;
     }
 
     return res.json({ success: true, reply, fallback: true });

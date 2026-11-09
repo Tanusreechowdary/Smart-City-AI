@@ -10,7 +10,7 @@ import { CityAIPredictionEngine } from '../services/aiPredictionEngine';
 export const AiInsightsLab: React.FC = () => {
   const { metrics } = useCityData();
 
-  const [activeModelTab, setActiveModelTab] = useState<'traffic' | 'water' | 'energy' | 'waste'>('traffic');
+  const [activeModelTab, setActiveModelTab] = useState<'traffic' | 'water' | 'energy'>('traffic');
   const [trafficHour, setTrafficHour] = useState<number>(18);
   const [weatherParam, setWeatherParam] = useState<'clear' | 'light_rain' | 'heavy_rain' | 'fog'>('heavy_rain');
   const [hasEvent, setHasEvent] = useState<boolean>(true);
@@ -57,7 +57,6 @@ export const AiInsightsLab: React.FC = () => {
             { id: 'traffic', label: 'Ridge Traffic Regressor (Benz Circle)', badge: 'R² 0.942' },
             { id: 'water', label: 'Isolation Forest (Prakasam Barrage)', badge: 'Score -1 to +1' },
             { id: 'energy', label: 'ARIMA Grid Balancing (Gunadala)', badge: 'Demand Peak' },
-            { id: 'waste', label: 'TSP Nearest-Neighbor (One Town/PNBS)', badge: '38% Savings' },
           ].map((m) => (
             <button
               key={m.id}
@@ -257,17 +256,6 @@ export const AiInsightsLab: React.FC = () => {
               <span className="text-xl font-bold font-hud text-cyan-700 dark:text-cyan-400">-22.4 MW</span>
             </div>
           </div>
-        </div>
-      )}
-
-      {activeModelTab === 'waste' && (
-        <div className="hud-panel p-5 rounded-2xl space-y-4 font-mono-code text-xs">
-          <h3 className="font-hud text-sm font-semibold text-slate-900 dark:text-white tracking-wide">
-            Vijayawada Traveling Salesperson (TSP) Nearest-Neighbor Solver
-          </h3>
-          <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
-            Prioritizes compactor routing between One Town wholesale vegetable markets, PNBS bus complex, and Bhavanipuram Rythu Bazaar, cutting VMC municipal diesel consumption by 38.4%.
-          </p>
         </div>
       )}
     </div>

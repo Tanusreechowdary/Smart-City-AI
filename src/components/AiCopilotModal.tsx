@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   X,
   Send,
@@ -6,6 +6,14 @@ import {
   User,
   Sparkles,
   Activity,
+  Trash2,
+  Minimize2,
+  Maximize2,
+  ExternalLink,
+  MessageSquare,
+  HelpCircle,
+  Lightbulb,
+  HeartPulse,
 } from 'lucide-react';
 import { useCityData } from '../context/CityDataContext';
 import { GeminiCityCopilot } from '../services/geminiService';
@@ -16,41 +24,65 @@ interface AiCopilotModalProps {
 }
 
 interface ChatMessage {
+  id: string;
   sender: 'ai' | 'user';
   text: string;
   time: string;
 }
+
+export const CIVY_LOGO_URL = '/assets/civy-logo.jpeg';
 
 export const AiCopilotModal: React.FC<AiCopilotModalProps> = ({ isOpen, onClose }) => {
   const { metrics, mapNodes, complaints } = useCityData();
 
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
+      id: 'init-1',
       sender: 'ai',
-      text: `Namaskaram! I am the **Vijayawada Smart City AI Copilot** (VMC Digital Twin).
-I continuously analyze live telemetry from 1,280+ IoT edge sensors across Benz Circle, Prakasam Barrage, Auto Nagar, and One Town.
+      text: `Namaskaram! I am **Civy** (సివి), your friendly Smart City AI Assistant! 🤖🏙️✨
 
-How can I assist your municipal operations or citizen inquiries today?`,
+I am here to help keep our city **Smarter, Safer, and Greener**. How can I help you today?
+
+• **🚨 Emergency Services**: Nearest 24/7 hospitals (GGH, Manipal, Ramesh), police, fire rescue & 108 dials.
+• **🗑️ Waste & Sanitation**: How to submit waste disposal grievances, municipal garbage schedules, and eco recycling.
+• **⚡ City Telemetry**: Live power grid demand, solar generation, Prakasam Barrage water levels, and sensors.
+• **🌐 General Questions**: Andhra Pradesh tourism, history, weather, facts, or any question you have!`,
       time: 'Just now',
     },
   ]);
   const [input, setInput] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
-
-  if (!isOpen) return null;
+  const [isExpanded, setIsExpanded] = useState<boolean>(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const quickPrompts = [
-    'What is the traffic congestion forecast for Benz Circle at 18:00?',
-    'What is the Prakasam Barrage reservoir water level and SCADA status?',
-    'How many waste compactors in One Town and PNBS need pickup?',
-    'What are the air quality (PM2.5) readings in Auto Nagar?',
-    'What is the status of open pothole grievances on Eluru Road?',
+    { label: '👋 Say Hi to Civy', query: 'Hi Civy! Introduce yourself and tell me what you can do.' },
+    { label: '🏥 Nearest Emergency Hospital', query: 'What is the nearest 24/7 emergency hospital and trauma center near Benz Circle?' },
+    { label: '🗑️ Waste Disposal Reporting', query: 'How do I report uncollected garbage and waste disposal issues in my ward?' },
+    { label: '🚦 Live Traffic & Detours', query: 'What is the current traffic congestion at Benz Circle and recommended detour?' },
+    { label: '⚡ Clean Energy & Solar', query: 'What is the current power grid demand and solar generation in Gunadala?' },
+    { label: '💧 Prakasam Barrage SCADA', query: 'What is the water level and reservoir telemetry at Prakasam Barrage?' },
+    { label: '🚌 Transit: PNBS Bus & Trains', query: 'How do I reach Pandit Nehru Bus Station (PNBS) and Vijayawada Railway Station?' },
+    { label: '🏛️ Top Places to Visit', query: 'What are the top heritage tourist attractions to visit in Vijayawada?' },
+    { label: '🌐 General Question', query: 'Tell me about the history and growth of Vijayawada and Andhra Pradesh.' },
   ];
+
+  // Auto scroll to bottom
+  useEffect(() => {
+    if (isOpen) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      inputRef.current?.focus();
+    }
+  }, [messages, isOpen, loading]);
+
+  if (!isOpen) return null;
 
   const handleSendPrompt = async (promptText: string) => {
     if (!promptText.trim()) return;
 
     const userMsg: ChatMessage = {
+      id: `user-${Date.now()}`,
       sender: 'user',
       text: promptText,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -69,6 +101,7 @@ How can I assist your municipal operations or citizen inquiries today?`,
       });
 
       const aiMsg: ChatMessage = {
+        id: `ai-${Date.now()}`,
         sender: 'ai',
         text: response,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -78,9 +111,16 @@ How can I assist your municipal operations or citizen inquiries today?`,
       setMessages((prev) => [
         ...prev,
         {
+          id: `ai-err-${Date.now()}`,
           sender: 'ai',
-          text: 'VMC telemetry stream connection error. Sensors remain at nominal baseline.',
-          time: 'Just now',
+          text: `I apologize, I encountered a brief network delay connecting to the AI model. 
+
+For urgent emergencies:
+• **Medical / Ambulance**: Dial **108**
+• **Police Emergency**: Dial **100 / 112**
+• **Fire Office**: Dial **101**
+• **Municipal Complaints**: Submit under the **My Complaints** tab.`,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         },
       ]);
     } finally {
@@ -93,79 +133,125 @@ How can I assist your municipal operations or citizen inquiries today?`,
     handleSendPrompt(input);
   };
 
+  const handleClearChat = () => {
+    setMessages([
+      {
+        id: 'cleared-1',
+        sender: 'ai',
+        text: 'Chat history cleared. I am ready to answer any question about city telemetry, emergency assistance, waste disposal, or general topics!',
+        time: 'Just now',
+      },
+    ]);
+  };
+
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
-      <div className="hud-panel rounded-2xl w-full max-w-2xl border border-slate-200 dark:border-cyan-400/50 shadow-2xl flex flex-col h-[620px] max-h-[92vh] overflow-hidden">
-        {/* Header */}
-        <div className="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070c14]/90 flex items-center justify-between">
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-150">
+      <div
+        className={`bg-white rounded-2xl border border-slate-200 shadow-2xl flex flex-col transition-all duration-200 overflow-hidden ${
+          isExpanded
+            ? 'w-full max-w-4xl h-[90vh]'
+            : 'w-full max-w-2xl h-[650px] max-h-[92vh]'
+        }`}
+      >
+        {/* Header Bar */}
+        <div className="p-4 border-b border-slate-100 bg-[#0c1e33] text-white flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-cyan-100 dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-400 border border-cyan-200 dark:border-cyan-400/40 shadow-xs">
-              <Bot className="w-5 h-5 animate-pulse" />
+            <div className="relative shrink-0">
+              <img
+                src={CIVY_LOGO_URL}
+                alt="Civy - Smart City AI"
+                className="w-11 h-11 rounded-full object-cover border-2 border-cyan-400 shadow-md ring-2 ring-cyan-500/20"
+              />
+              <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-[#0c1e33] flex items-center justify-center">
+                <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+              </span>
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-hud font-bold text-slate-900 dark:text-white text-sm md:text-base tracking-wide">
-                  Vijayawada Urban Intelligence AI Copilot
+                <h3 className="font-bold text-base tracking-wide text-white flex items-center gap-1.5">
+                  <span>Civy</span>
+                  <span className="text-xs font-normal text-cyan-300">సివి</span>
                 </h3>
-                <span className="text-[10px] bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-500/30 px-2 py-0.5 rounded-full font-mono-code font-bold">
-                  AUTONOMOUS AGENT
+                <span className="text-[10px] bg-cyan-500/20 text-cyan-300 border border-cyan-400/30 px-2 py-0.5 rounded-full font-bold">
+                  Smarter • Safer • Greener
                 </span>
               </div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono-code">
-                VMC Command Center • Gemini 2.5 Flash / Real Telemetry Context
+              <p className="text-xs text-slate-300">
+                Your Friendly Smart City AI Companion • Live Telemetry & 24/7 Citizen Answers
               </p>
             </div>
           </div>
 
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={handleClearChat}
+              className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+              title="Clear chat history"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-colors hidden sm:block cursor-pointer"
+              title={isExpanded ? 'Restore size' : 'Expand full window'}
+            >
+              {isExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+            </button>
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+              title="Close Assistant"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
-        {/* Suggested Quick Prompts Bar */}
-        <div className="px-4 py-2.5 bg-white dark:bg-[#050910] border-b border-slate-200 dark:border-slate-800/80 flex items-center gap-2 overflow-x-auto no-scrollbar">
-          <Sparkles className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400 shrink-0" />
-          <span className="text-[10px] font-mono-code text-slate-500 uppercase tracking-wider shrink-0 font-semibold">
-            Quick Inquiries:
+        {/* Quick Inquiries Scrolling Pills */}
+        <div className="px-3.5 py-2.5 bg-slate-50 border-b border-slate-100 flex items-center gap-2 overflow-x-auto no-scrollbar shrink-0">
+          <Sparkles className="w-3.5 h-3.5 text-[#1366d9] shrink-0" />
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">
+            Suggested:
           </span>
           {quickPrompts.map((qp, idx) => (
             <button
               key={idx}
-              onClick={() => handleSendPrompt(qp)}
-              className="text-[11px] font-mono-code text-slate-700 dark:text-slate-300 hover:text-cyan-700 dark:hover:text-cyan-300 bg-slate-100 dark:bg-[#0b1322] border border-slate-200 dark:border-slate-800 hover:border-cyan-400 px-3 py-1 rounded-full whitespace-nowrap transition-colors shrink-0 shadow-2xs cursor-pointer"
+              onClick={() => handleSendPrompt(qp.query)}
+              className="text-xs text-slate-700 hover:text-[#1366d9] hover:bg-blue-50 bg-white border border-slate-200 hover:border-blue-300 px-3 py-1 rounded-full whitespace-nowrap transition-all shrink-0 shadow-2xs font-medium cursor-pointer"
             >
-              {qp}
+              {qp.label}
             </button>
           ))}
         </div>
 
-        {/* Message History */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 font-mono-code text-xs bg-slate-50/50 dark:bg-transparent">
-          {messages.map((m, idx) => (
+        {/* Message Thread */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 text-xs sm:text-sm bg-[#f8fafc]">
+          {messages.map((m) => (
             <div
-              key={idx}
+              key={m.id}
               className={`flex gap-3 ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               {m.sender === 'ai' && (
-                <div className="w-7 h-7 rounded-lg bg-cyan-100 dark:bg-cyan-950/80 border border-cyan-300 dark:border-cyan-400/40 text-cyan-800 dark:text-cyan-400 flex items-center justify-center shrink-0">
-                  <Bot className="w-4 h-4" />
+                <div className="relative shrink-0 mt-0.5">
+                  <img
+                    src={CIVY_LOGO_URL}
+                    alt="Civy"
+                    className="w-8 h-8 rounded-full object-cover border-2 border-cyan-400 shadow-xs"
+                  />
                 </div>
               )}
 
               <div
-                className={`p-3.5 rounded-2xl max-w-[85%] leading-relaxed ${
+                className={`p-3.5 sm:p-4 rounded-2xl max-w-[85%] leading-relaxed ${
                   m.sender === 'user'
-                    ? 'bg-cyan-600 text-white font-medium rounded-tr-none shadow-sm'
-                    : 'bg-white dark:bg-[#070c14] text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-800 rounded-tl-none whitespace-pre-line shadow-xs'
+                    ? 'bg-[#1366d9] text-white font-medium rounded-tr-none shadow-sm'
+                    : 'bg-white text-slate-800 border border-slate-200 rounded-tl-none whitespace-pre-line shadow-xs'
                 }`}
               >
-                {m.text}
+                <div className="prose prose-xs max-w-none text-inherit">{m.text}</div>
                 <div
-                  className={`text-[9px] mt-1.5 ${
-                    m.sender === 'user' ? 'text-cyan-100 text-right' : 'text-slate-400 text-left'
+                  className={`text-[10px] mt-2 font-medium ${
+                    m.sender === 'user' ? 'text-blue-100 text-right' : 'text-slate-400 text-left'
                   }`}
                 >
                   {m.time}
@@ -173,7 +259,7 @@ How can I assist your municipal operations or citizen inquiries today?`,
               </div>
 
               {m.sender === 'user' && (
-                <div className="w-7 h-7 rounded-lg bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center shrink-0 shadow-xs mt-0.5">
                   <User className="w-4 h-4" />
                 </div>
               )}
@@ -181,32 +267,42 @@ How can I assist your municipal operations or citizen inquiries today?`,
           ))}
 
           {loading && (
-            <div className="flex items-center gap-2 text-cyan-700 dark:text-cyan-400 text-xs italic animate-pulse">
-              <Activity className="w-4 h-4 animate-spin" />
-              <span>Analyzing Vijayawada digital twin sensors and preparing response...</span>
+            <div className="flex items-center gap-3 text-slate-600 bg-white border border-slate-200 rounded-2xl p-3 w-fit shadow-xs animate-in fade-in">
+              <img
+                src={CIVY_LOGO_URL}
+                alt="Civy thinking"
+                className="w-6 h-6 rounded-full object-cover border border-cyan-400 animate-pulse shrink-0"
+              />
+              <span className="text-xs font-semibold text-slate-700">
+                Civy is thinking and finding the best answer...
+              </span>
             </div>
           )}
+
+          <div ref={messagesEndRef} />
         </div>
 
-        {/* Bottom Input Form */}
+        {/* Input Bar */}
         <form
           onSubmit={handleSubmit}
-          className="p-3 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-[#070c14] flex items-center gap-2"
+          className="p-3 sm:p-3.5 border-t border-slate-200 bg-white flex items-center gap-2 shrink-0"
         >
           <input
+            ref={inputRef}
             type="text"
-            placeholder="Ask about Benz Circle traffic, Prakasam Barrage water, streetlights, or report issues..."
+            placeholder="Type any question (e.g., nearest hospital, waste disposal, traffic, history, science)..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            className="flex-1 bg-slate-50 dark:bg-[#0b1322] border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 dark:text-white placeholder-slate-400 outline-none focus:border-cyan-500 font-mono-code transition-colors"
+            disabled={loading}
+            className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-[#1366d9] focus:bg-white transition-all shadow-inner"
           />
           <button
             type="submit"
             disabled={!input.trim() || loading}
-            className="px-4 py-2.5 bg-cyan-600 hover:bg-cyan-700 disabled:opacity-40 text-white font-bold rounded-xl transition-all flex items-center gap-1.5 text-xs font-mono-code shadow-xs cursor-pointer"
+            className="px-5 py-2.5 bg-[#1366d9] hover:bg-[#0f52b0] disabled:opacity-40 text-white font-bold rounded-xl transition-all flex items-center gap-1.5 text-xs sm:text-sm shadow-sm cursor-pointer shrink-0"
           >
-            <Send className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Send</span>
+            <Send className="w-4 h-4" />
+            <span className="hidden sm:inline">Ask AI</span>
           </button>
         </form>
       </div>

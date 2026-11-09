@@ -10,6 +10,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { useCityData } from '../context/CityDataContext';
+import { CIVY_LOGO_URL } from './AiCopilotModal';
 import { UserRole } from '../types';
 
 interface NavbarProps {
@@ -69,13 +70,18 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Right controls: AI Assist, Notification Bell, User Profile */}
       <div className="flex items-center gap-3 md:gap-4">
-        {/* AI Assistant Quick Pill */}
+        {/* Civy AI Assistant Quick Pill */}
         <button
           onClick={onOpenChat}
-          className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-[#1366d9] text-xs font-semibold transition-all border border-blue-100 cursor-pointer"
+          className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-50/90 hover:bg-blue-100 text-[#1366d9] text-xs font-bold transition-all border border-blue-200/80 shadow-2xs cursor-pointer group"
+          title="Ask Civy - Smart City AI"
         >
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>AI Assistant</span>
+          <img
+            src={CIVY_LOGO_URL}
+            alt="Civy"
+            className="w-5 h-5 rounded-full object-cover border border-cyan-400 group-hover:scale-110 transition-transform shadow-xs"
+          />
+          <span>Ask Civy</span>
         </button>
 
         {/* Notifications Bell with Red Badge 3 */}

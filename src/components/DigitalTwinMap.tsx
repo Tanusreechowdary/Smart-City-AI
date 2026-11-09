@@ -10,7 +10,6 @@ import {
   Car,
   Wind,
   Zap,
-  Trash2,
   Droplets,
   Lightbulb,
   Radio,
@@ -187,7 +186,7 @@ export const DigitalTwinMap: React.FC = () => {
           'AP Smart Power Grid Meter (Connected)',
           'Piped Drinking Water SCADA Node Active',
           'AP FiberNet High-Speed Optical Connected',
-          'Smart Waste Collection RFID Verified',
+          'Smart Streetlighting Zhaga Grid Monitored',
         ],
       });
       setSelectedCorridor(null);
@@ -658,9 +657,8 @@ export const DigitalTwinMap: React.FC = () => {
                   {[
                     { id: 'all', label: 'All Maps' },
                     { id: 'satellite', label: '🛰️ Satellite' },
-                    { id: 'traffic', label: '🚦 Traffic' },
-                    { id: 'streets', label: '🗺️ Streets' },
-                    { id: 'thematic', label: '🌦️ Thematic' },
+                    { id: 'thematic', label: '💧 SCADA & Environment' },
+                    { id: 'topo', label: '🏔️ River Basins' },
                   ].map((cat) => (
                     <button
                       key={cat.id}
